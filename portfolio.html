@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Kushagra | Unity Game Developer</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',sans-serif;}
+
+html,body{
+    height:100%;
+    overflow:hidden;
+    cursor:none;
+    color:#ffecec;
+    background:url("spidey.jpg") center/cover fixed;
+}
+
+/* normal cursor in modal */
+body.modal-open{cursor:default;}
+body.modal-open .crosshair{display:none;}
+
+body::before{
+    content:"";
+    position:fix;
+    inset:0;    
+    background:rgba(0,0,0,0.65);
+    z-index:-3;
+}
+
+/* BOOT */
+#boot{
+    position:fixed;
+    inset:0;
+    background:black;
+    color:#ff2b2b;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+    letter-spacing:3px;
+}
+.progress{width:300px;height:6px;border:1px solid #ff2b2b}
+.progress div{height:100%;width:0;background:#ff2b2b;animation:load 3s linear forwards}
+@keyframes load{to{width:100%}}
+
+/* SCANLINES */
+.scanlines{
+    position:fixed;inset:0;
+    background:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:100% 4px;
+    pointer-events:none;
+    z-index:999;
+}
+
+/* ===== CREATIVE HUD CURSOR ===== */
+.crosshair{
+    position:fixed;
+    width:34px;
+    height:34px;
+    border:2px solid rgba(255,43,43,0.8);
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    z-index:9999;
+    box-shadow:0 0 12px rgba(255,43,43,.9), inset 0 0 8px rgba(255,43,43,.6);
+    animation:pulse 1.6s infinite;
+}
+.crosshair::before{
+    content:"";
+    position:absolute;
+    top:50%;left:50%;
+    width:6px;height:6px;
+    background:#ff2b2b;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 10px #ff2b2b;
+}
+.crosshair::after{
+    content:"";
+    position:absolute;
+    inset:-7px;
+    border:1px dashed rgba(255,43,43,.6);
+    border-radius:50%;
+    animation:spin 3.5s linear infinite;
+}
+@keyframes pulse{
+    0%,100%{box-shadow:0 0 8px rgba(255,43,43,.6), inset 0 0 6px rgba(255,43,43,.4)}
+    50%{box-shadow:0 0 18px rgba(255,43,43,1), inset 0 0 10px rgba(255,43,43,.7)}
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* METEOR */
+.meteor{
+    position:fixed;
+    width:22px;
+    height:2px;
+    background:linear-gradient(90deg, rgba(255,43,43,1), rgba(255,43,43,0));
+    box-shadow:0 0 12px rgba(255,43,43,0.9);
+    border-radius:2px;
+    pointer-events:none;
+    animation:meteorFade 0.6s forwards;
+}
+
+@keyframes meteorFade{
+    to{
+        opacity:0;
+        transform:translateX(-25px) scale(0.6);
+    }
+}
+
+/* LAYOUT */
+.container{
+    display:grid;
+    grid-template-columns:300px 1fr;
+    height:100vh;
+}
+
+/* SIDEBAR */
+.menu{
+    background:rgba(10,0,0,0.9);
+    border-right:2px solid #ff2b2b;
+    padding:20px;
+}
+.profile h1{color:#ff2b2b;text-shadow:0 0 12px #ff2b2b}
+.menu p{font-size:12px;opacity:.8}
+.menu button{
+    width:100%;padding:14px;margin:12px 0;
+    background:transparent;border:1px solid #ff2b2b;
+    color:#ffecec;transition:.3s;
+}
+.menu button:hover{background:#ff2b2b;color:black}
+
+/* MAIN */
+.screen{padding:30px;overflow-y:auto;height:100%}
+.panel{display:none}
+.panel.active{display:block}
+.panel h2{color:#ff2b2b;margin-bottom:15px}
+
+.block{
+    border:1px solid #ff2b2b;
+    padding:15px;margin-bottom:15px;
+    background:rgba(0,0,0,.6);
+}
+
+/* HOME */
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:25px}
+.hud-box{border:1px solid #ff2b2b;padding:18px;background:rgba(0,0,0,.65)}
+.hud-title{color:#ff2b2b;font-size:13px;margin-bottom:12px}
+.stat{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.stat span:last-child{color:#ff7a7a}
+
+.quick-actions{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:15px;margin-top:30px;
+}
+/* CONNECT FORM */
+.connect-box{
+    margin-top:35px;
+    padding:22px;
+    border:1px solid #ff2b2b;
+    background:rgba(0,0,0,0.65);
+    box-shadow:0 0 25px rgba(255,43,43,0.25);
+}
+
+.connect-title{
+    color:#ff2b2b;
+    font-size:14px;
+    letter-spacing:2px;
+    margin-bottom:18px;
+}
+
+.connect-form{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.connect-form input,
+.connect-form textarea{
+    background:rgba(0,0,0,0.8);
+    border:1px solid #ff2b2b;
+    padding:12px;
+    color:#ffecec;
+    font-size:12px;
+    outline:none;
+}
+
+.connect-form input::placeholder,
+.connect-form textarea::placeholder{
+    color:#ff9a9a;
+    letter-spacing:1px;
+}
+
+.connect-form input:focus,
+.connect-form textarea:focus{
+    box-shadow:0 0 12px rgba(255,43,43,0.8);
+}
+
+.connect-send{
+    margin-top:8px;
+    background:transparent;
+    border:1px solid #ff2b2b;
+    padding:12px;
+    color:#ffecec;
+    font-size:12px;
+    letter-spacing:1px;
+    cursor:none;
+    transition:.3s;
+}
+
+.connect-send i{
+    margin-right:6px;
+    color:#ff2b2b;
+}
+
+.connect-send:hover{
+    background:#ff2b2b;
+    color:black;
+}
+.connect-send:hover i{
+    color:black;
+}
+
+.action-btn{
+    text-decoration:none;border:1px solid #ff2b2b;
+    padding:14px 10px;text-align:center;
+    color:#ffecec;font-size:12px;
+    background:rgba(0,0,0,.65);transition:.3s;
+}
+.action-btn i{display:block;margin-bottom:6px;font-size:18px;color:#ff2b2b}
+.action-btn:hover{background:#ff2b2b;color:black}
+.action-btn:hover i{color:black}
+
+/* SKILLS */
+.skill-row{padding:18px;margin-bottom:18px;border:1px solid #ff2b2b;background:rgba(0,0,0,.65)}
+.skill-bar{margin-top:10px;height:8px;background:#200;border:1px solid #ff2b2b}
+.skill-fill{height:100%;background:linear-gradient(90deg,#ff2b2b,#ff7a7a);width:var(--level)}
+
+/* PROJECTS */
+.project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:30px}
+.project-card{background:rgba(0,0,0,.75);border:1px solid #ff2b2b;padding:15px}
+.project-images{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px}
+.project-images img{
+    width:100%;height:150px;object-fit:cover;
+    border:1px solid #ff2b2b;cursor:pointer;transition:.35s;
+}
+.project-images img:hover{transform:scale(1.07);box-shadow:0 0 25px rgba(255,43,43,.8)}
+.project-images img:only-child{grid-column:1/-1}
+.project-header{display:flex;justify-content:space-between;margin-bottom:10px}
+.project-header h3{color:#ff2b2b}
+.status{font-size:10px;padding:4px 10px;border:1px solid}
+.completed{color:#00ff9c;border-color:#00ff9c}
+.progressing{color:#ffaa00;border-color:#ffaa00}
+
+/* IMAGE MODAL */
+#imageModal{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.9);
+    display:none;align-items:center;justify-content:center;
+    z-index:10001;
+}
+#imageModal img{max-width:90%;max-height:90%;border:2px solid #ff2b2b}
+#closeModal{
+    position:absolute;top:20px;right:30px;
+    font-size:40px;color:#ff2b2b;cursor:pointer;
+}
+
+/* FOOTER */
+.footer{position:absolute;bottom:15px;right:30px;opacity:.7}
+html, body,
+a, button, input, textarea, select,
+a:hover, button:hover {
+    cursor: none !important;
+}
+/* FIX CURSOR INSIDE IMAGE MODAL */
+body.modal-open,
+body.modal-open * {
+    cursor: default !important;
+}
+/* ================= MOBILE OPTIMIZATION ================= */
+@media (max-width: 768px) {
+
+    html, body {
+        overflow: auto;
+        cursor: default !important;
+    }
+
+    /* Disable custom cursor on mobile */
+    .crosshair,
+    .meteor {
+        display: none !important;
+    }
+
+    /* Layout becomes vertical */
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .menu {
+        border-right: none;
+        border-bottom: 2px solid #ff2b2b;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .menu button {
+        margin: 0;
+        padding: 12px;
+        font-size: 11px;
+    }
+
+    .screen {
+        padding: 18px;
+    }
+
+    .home-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .project-images img {
+        height: 180px;
+    }
+
+    .connect-form input,
+    .connect-form textarea,
+    .connect-send {
+        font-size: 14px;
+        padding: 14px;
+    }
+
+    .footer {
+        position: static;
+        margin-top: 20px;
+        text-align: center;
+    }
+}
+/* ================= MOBILE ONLY FIX ================= */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Enable normal mobile behavior */
+    html, body {
+        overflow: auto !important;
+        cursor: default !important;
+        height: auto;
+    }
+
+    /* Disable custom cursor & effects */
+    .crosshair,
+    .meteor {
+        display: none !important;
+    }
+
+    /* Reset forced cursor hiding */
+    * {
+        cursor: default !important;
+    }
+
+    /* Layout stack */
+    .container {
+        grid-template-columns: 1fr !important;
+        height: auto;
+    }
+
+    .menu {
+        border-right: none;
+        border-bottom: 2px solid #ff2b2b;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .menu button {
+        margin: 0;
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    .screen {
+        padding: 18px;
+        height: auto;
+        overflow: visible;
+    }
+
+    .home-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Bigger tap targets */
+    .action-btn,
+    .connect-send {
+        padding: 16px;
+        font-size: 14px;
+    }
+
+    /* Images */
+    .project-images img {
+        height: 190px;
+    }
+
+    /* Modal improvements */
+    #imageModal img {
+        max-width: 95%;
+        max-height: 80%;
+    }
+
+    #closeModal {
+        font-size: 34px;
+        top: 12px;
+        right: 15px;
+    }
+
+    /* Footer */
+    .footer {
+        position: static;
+        margin: 20px 0;
+        text-align: center;
+    }
+}
+/* ===== MOBILE: SCALE EVERYTHING UP ===== */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Base font scaling */
+    html {
+        font-size: 18px;
+    }
+
+    body {
+        line-height: 1.6;
+    }
+
+    /* Bigger containers */
+    .screen {
+        padding: 22px;
+    }
+
+    .block,
+    .hud-box,
+    .skill-row,
+    .project-card,
+    .connect-box {
+        padding: 20px;
+    }
+
+    /* Headings */
+    h1 {
+        font-size: 22px;
+    }
+
+    h2 {
+        font-size: 20px;
+        margin-bottom: 18px;
+    }
+
+    .hud-title {
+        font-size: 14px;
+    }
+
+    /* Menu buttons */
+    .menu button {
+        padding: 16px;
+        font-size: 14px;
+    }
+
+    /* Action buttons */
+    .action-btn {
+        padding: 18px 12px;
+        font-size: 14px;
+    }
+
+    .action-btn i {
+        font-size: 22px;
+    }
+
+    /* Stats text */
+    .stat {
+        font-size: 14px;
+    }
+
+    /* Forms */
+    .connect-form input,
+    .connect-form textarea {
+        font-size: 14px;
+        padding: 16px;
+    }
+
+    .connect-send {
+        font-size: 14px;
+        padding: 16px;
+    }
+
+    /* Projects images — BIGGER */
+    .project-images img {
+        height: 220px;
+    }
+
+    /* Skill bars thicker */
+    .skill-bar {
+        height: 10px;
+    }
+
+    /* Footer */
+    .footer {
+        font-size: 12px;
+        margin-top: 16px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="boot">
+    <div>INITIALIZING SYSTEM...</div><br>
+    <div class="progress"><div></div></div>
+</div>
+
+<div class="scanlines"></div>
+<div class="crosshair"></div>
+
+<div class="container">
+
+<div class="menu">
+    <div class="profile">
+        <h1>KUSHAGRA GUPTA</h1>
+        <p>UNITY GAME DEVELOPER</p>
+    </div>
+    <button onclick="show('home')">HOME</button>
+    <button onclick="show('skills')">SKILLS</button>
+    <button onclick="show('projects')">PROJECTS</button>
+    <button onclick="show('education')">EDUCATION</button>
+    <button onclick="show('contact')">CONTACT</button>
+</div>
+
+<div class="screen">
+
+<div class="panel active" id="home">
+    <h2>WELCOME, PLAYER</h2>
+    <div class="block">
+       I'm a third-year BTech Computer Engineering student and Unity game developer focused on
+        immersive gameplay, mechanics, atmosphere, and interaction systems.
+    </div>
+
+    <div class="home-grid">
+        <div class="hud-box">
+            <div class="hud-title">PLAYER STATS</div>
+            <div class="stat"><span>Role</span><span>Unity Game Developer</span></div>
+            <div class="stat"><span>Experience</span><span>6+ Months</span></div>
+            <div class="stat"><span>Focus</span><span>Gameplay & Systems</span></div>
+            <div class="stat"><span>Status</span><span>Open to Full-Time</span></div>
+        </div>
+
+        <div class="hud-box">
+            <div class="hud-title">CURRENT MISSION</div>
+            <p style="font-size:13px;line-height:1.6">
+                Build immersive and performance-optimized Unity games with strong
+                gameplay loops, AI interactions, and atmospheric environments.
+            </p>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <a onclick="show('projects')" class="action-btn"><i class="fa-solid fa-gamepad"></i>PROJECTS</a>
+        <a href="resume.pdf" class="action-btn"><i class="fa-solid fa-file-lines"></i>RESUME</a>
+
+        <!-- REAL LINKS ADDED -->
+        <a href="https://github.com/Kushagra-77" target="_blank" class="action-btn">
+            <i class="fa-brands fa-github"></i>GITHUB
+        </a>
+        <a href="https://www.linkedin.com/in/kushagra-gupta-6b06b5314/" target="_blank" class="action-btn">
+            <i class="fa-brands fa-linkedin"></i>LINKEDIN
+        </a>
+    </div>
+</div>
+
+<div class="panel" id="skills">
+    <h2>SKILL TREE</h2>
+    <div class="skill-row" style="--level:90%"><span>Unity Engine</span><div class="skill-bar"><div class="skill-fill"></div></div></div>
+    <div class="skill-row" style="--level:55%"><span>C# Programming</span><div class="skill-bar"><div class="skill-fill"></div></div></div>
+    <div class="skill-row" style="--level:60%"><span>Blender 3D</span><div class="skill-bar"><div class="skill-fill"></div></div></div>
+    <div class="skill-row" style="--level:80%"><span>Game Design</span><div class="skill-bar"><div class="skill-fill"></div></div></div>
+    <div class="skill-row" style="--level:90%"><span>C++ Programming</span><div class="skill-bar"><div class="skill-fill"></div></div></div>
+    
+</div>
+
+<div class="panel" id="projects">
+    <h2>PROJECTS</h2>
+    <div class="project-grid">
+        <div class="project-card">
+            <div class="project-images">
+                <img src="./making of nhtbnd.png">
+                <img src="./finalgame.png">
+            </div>
+            <div class="project-header">
+                <h3>Nightbound</h3>
+                <span class="status completed">COMPLETED</span>
+            </div>
+            <p>First-person horror maze escape game with zombies, time limits, and multiple difficulty levels.</p>
+        </div>
+
+        <div class="project-card">
+            <div class="project-images">
+                <img src="./rnnr.png">
+            </div>
+            <div class="project-header">
+                <h3>Endless Runner</h3>
+                <span class="status progressing">IN DEVELOPMENT</span>
+            </div>
+            <p>Fast-paced endless runner with smooth controls and progressive difficulty scaling.</p>
+        </div>
+    </div>
+</div>
+
+<div class="panel" id="education">
+    <h2>EDUCATION</h2>
+    <div class="block">City International School, Pimpri – High School</div>
+    <div class="block">Vidhya Valley Junior College – 11th & 12th</div>
+    <div class="block">PCCOE, Pune – BTech Computer Engineering</div>
+</div>
+
+<div class="panel" id="contact">
+    <h2>CONTACT</h2>
+    <div class="block">📧 kushyt2005@gmail.com</div>
+    <div class="block">📱 1122334455</div>
+    <div class="block">📍 Pune, Maharashtra</div>
+    <div class="connect-box">
+    <div class="connect-title">WANT TO CONNECT?</div>
+    <p class="connect-text">
+        Open to exciting roles and creative game development collaborations.
+Got an idea or a challenge? Let’s connect and level it up together.
+    </p>
+
+    <div class="connect-box">
+     
+
+    <form class="connect-form" id="contactForm">
+
+        <input type="text" name="name" placeholder="NAME" required>
+<input type="email" name="email" placeholder="EMAIL" required>
+<textarea name="message" rows="4" placeholder="Your MESSAGE"></textarea>
+
+
+        <button type="submit" class="connect-send">
+            <i class="fa-solid fa-paper-plane"></i> SEND MESSAGE
+        </button>
+    </form>
+</div>
+
+</div>
+
+</div>
+
+<div class="footer">ENGINE : UNITY | MODE : CREATIVE</div>
+
+</div>
+</div>
+
+<div id="imageModal">
+    <span id="closeModal">&times;</span>
+    <img id="modalImg">
+</div>
+
+<script>
+setTimeout(()=>document.getElementById("boot").style.display="none",3000);
+
+function show(id){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+/* cursor + meteor */
+let cx=0,cy=0;
+document.addEventListener("mousemove", e => {
+    if (document.body.classList.contains("modal-open")) return;
+
+    cx += (e.clientX - cx) * 0.25;
+    cy += (e.clientY - cy) * 0.25;
+
+    const c = document.querySelector(".crosshair");
+    c.style.left = cx + "px";
+    c.style.top  = cy + "px";
+
+    const m = document.createElement("div");
+    m.className = "meteor";
+
+    const angle = Math.random() * 360;
+    m.style.left = e.clientX + "px";
+    m.style.top  = e.clientY + "px";
+    m.style.transform = `rotate(${angle}deg)`;
+
+    document.body.appendChild(m);
+    setTimeout(() => m.remove(), 600);
+});
+
+
+/* modal */
+const modal=document.getElementById("imageModal");
+const modalImg=document.getElementById("modalImg");
+document.querySelectorAll(".project-images img").forEach(img=>{
+    img.onclick=()=>{
+        modal.style.display="flex";
+        modalImg.src=img.src;
+        document.body.classList.add("modal-open");
+    };
+});
+function closeModal(){
+    modal.style.display="none";
+    document.body.classList.remove("modal-open");
+}
+document.getElementById("closeModal").onclick=closeModal;
+modal.onclick=e=>{if(e.target===modal) closeModal();}
+document.addEventListener("keydown",e=>{if(e.key==="Escape") closeModal();});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+(function(){
+    emailjs.init("_EVP5K3y3yNA1fqOj");
+})();
+</script>
+<script>
+document.getElementById("contactForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    emailjs.sendForm(
+        "service_c95mm9c",
+        "template_5wmur6f",
+        this
+    ).then(() => {
+        alert("Message sent successfully!");
+        this.reset();
+    }, (error) => {
+        alert("Failed to send message. Try again.");
+        console.log(error);
+    });
+});
+</script>
+
+</body>
+</html>
